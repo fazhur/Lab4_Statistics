@@ -1,0 +1,134 @@
+```{r}
+require(BSDA)
+library(BSDA)
+require(EnvStats)   
+library(EnvStats)
+```
+
+```{r}
+n <- 13
+k <- 100
+l <- 50
+set.seed(13)
+```
+
+## Data generating
+
+```{r}
+a_k <- c()
+for(i in 1:k) {
+  a_k <- append(a_k, i * log(i^2*n + pi) - floor(i * log(i^2*n + pi)))
+}
+
+a_l <- c()
+for(i in 1:(l + 100)) {
+  a_l <- append(a_l, i * log(i^2*n + pi) - floor(i * log(i^2*n + pi)))
+}
+x <- qnorm(a_k)
+y <- qnorm(a_l)
+
+h_x <- hist(x, breaks = 100, plot = FALSE)
+cuts <- cut(h_x$breaks, c(-Inf, -.005, Inf))
+plot(h_x)
+
+h_y <- hist(y, breaks = 150, plot = FALSE)
+cuts <- cut(h_y$breaks, c(-Inf, -.005, Inf))
+plot(h_y)
+```
+
+### Problem 1
+
+$$
+H_{0}: \mu_{1}^2 = \mu_{2}^2 \ \ vs\  H_{1}:\mu_{1}\  !=\  \mu_{2};
+\\\sigma_{1}^2 = \sigma_{2}^2 = 1;
+$$ Here we use two-sided $z$-test, because we know $\sigma$ of distributions, and we need to test $\mu$ of two distributions and alternative hypothesis is arbitrary (!=).
+
+In Generalized Likelihood Ratio Test he reject $H_{0}$ at size $\alpha$ (0.05 in your case), when: $$2logL_{x}(H_{0},H_{1}) ≥ \chi^{(m)}_{1-\alpha}$$
+
+For two-sided $z$-test we can use: $$|z(x, y)| ≥ z_{0.975}$$
+
+$p$-value of the test is the smallest $\alpha$ at which $H_{0}$ can be rejected.
+
+If it is small enough, we reject $H_{0}$, otherwise, we do not reject it.
+
+For two-sided $z$-test: $$p(x,y)=2\phi(-|z(x,y|)$$
+
+In our case p ≈ 0.85, it is quite big value, so we do not reject $H_{0}$.
+
+If we check sample means, we really see that they are approximately equal.
+
+```{r}
+alpha = .05
+z.test(x=x, y=y, alternative="two.sided", sigma.x=1, sigma.y=1, conf.level=1-alpha)
+```
+
+### Problem 2
+
+$$
+H_{0}: \sigma_{1}^2 = \sigma_{2}^2 \ \ vs \ \ H_{1}: \sigma_{1}^2 > \sigma_{2}^2;
+$$
+
+$\mu1$ and $\mu2$ are unknown
+
+Here we use one-sided $f$-test, because we have unknown $\mu$ and $\sigma$ of distributions,
+
+and we need to test $\sigma$ of two distributions and alternative hypothesis bigger (\>).
+
+A significance level $0.05$ test of $H_{0}$ against $H_{1}$ is to accept $H_{0}$ if $S_{x}^2/S_{y}^2<F_{0.975}$,
+
+and reject $H_{0}$ otherwise.
+
+For this test $p$-value is equal to:
+
+$$p=2(1-P\{F_{n-1,m-1}<v\})$$
+
+In our case p ≈ 0.2909, it is quite big value, (less than $\alpha$) so it closer to do not reject $H_{0}$.
+
+```{r}
+alpha = .05
+var.test(x=x, y=y, alternative = "g", con.level = 1 - alpha)
+```
+
+### Problem 3
+
+Kolmogorov-Smirnov test is used to test if two samples have the same distributions.
+
+In first and second tests we compare distribution of $F_{x}$, which is unknown,
+
+with normal and exponensial distributions respectively.
+
+In the third test we compare unknown distributions $F_{x}$ and $F_{y}$, to check if they are similar.
+
+D is maximal vertical distance between ECDF and CDF, so the lower it is, the smaller is difference between practical and theoretical value.
+
+$p$-value is a minimal value of $\alpha$, when $H_{0}$ can be rejected.
+
+This way, smaller D increases a chance that our $H_{0}$ is correct.
+
+Also, if $p<\alpha$ ($\alpha$=0.05), we reject our $H_{0}$, otherwise - don't reject.
+
+Due to our tests:
+
+-   we do not reject that X is normally distributed;
+
+-   we reject that X is exponentially distributed with $\lambda=1$;
+
+-   we do not reject that X and Y have the same distributions.
+
+a)  
+
+```{r}
+ks.test(x=x, rnorm(k, mean=mean(x), sd=sd(x)), alternative = "two.sided")
+```
+
+b)  
+
+```{r}
+ks.test(x=x, rexp(k, 1), alternative = "two.sided")
+```
+
+c)  
+
+```{r}
+ks.test(x=x, y=y, alternative = "two.sided")
+```
